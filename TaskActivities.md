@@ -4,7 +4,14 @@
 
 ## Task 01
 
-Start: 16 Sep 2026
+- Duration:
+    - Start: 16 Sep 2026
+    - End: not yet
+
+- Files:
+    - main.py
+    - apiapp.py
+
 
 ### Build a custom AI API accepting only POST requests
 

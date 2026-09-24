@@ -22,3 +22,8 @@ There are two ways (comparison table):
 | **Implementation** | Requires writing custom state logic | Ready out of the box via thread IDs |
 
 I chose Approach 1 (Application-Managed Memory) because it provides full control, eliminates vendor lock-in, and represents the industry standard in AI engineering.
+
+To prevent token overflow and minimize API costs in production, the conversation history must be pruned rather than allowed to grow indefinitely. Two primary techniques can manage context size:
+
+* **Sliding Window:** Retains only a fixed buffer of recent messages (e.g., the last 10 messages) while discarding older ones. While computationally cheap and simple to implement, its downside is that the model completely loses context from earlier turns.
+* **Conversation Summarization:** Defines a threshold for message count. Once crossed, older turns are passed through the model to generate a concise summary. This summary is retained as a high-level system context alongside the latest turns, enabling long-term context retention while reducing input token usage.

@@ -1,0 +1,69 @@
+import json
+import os
+import requests
+from fastapi import FastAPI, HTTPException
+from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
+
+app = FastAPI()
+
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+HISTORY_FILE = os.path.join(CURRENT_DIR, "chat_history.json")
+WINDOW_SIZE = 10
+
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "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")
+OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
+
+def load_history() -> list:
+    if not os.path.exists(HISTORY_FILE):
+        return []
+    try:
+        with open(HISTORY_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except (json.JSONDecodeError, IOError):
+        return []
+
+def save_history(history: list):
+    with open(HISTORY_FILE, "w", encoding="utf-8") as f:
+        json.dump(history, f, ensure_ascii=False, indent=2)
+
+class ChatRequest(BaseModel):
+    prompt: str
+
+@app.post("/chat")
+def ask_ai(req: ChatRequest):
+    chat_history = load_history()
+    chat_history.append({"role": "user", "content": req.prompt})
+    context_window = chat_history[-WINDOW_SIZE:]
+
+    headers = {
+        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://localhost",
+        "X-OpenRouter-Title": "LocalAPI"
+    }
+
+    payload = {
+        "model": "~openai/gpt-sol-latest",
+        "max_tokens": 300,
+        "messages": context_window
+    }
+
+    try:
+        response = requests.post(OPENROUTER_URL, headers=headers, json=payload, timeout=30)
+        
+        if response.status_code != 200:
+            raise HTTPException(status_code=response.status_code, detail=response.text)
+            
+        data = response.json()
+        ai_reply = data["choices"][0]["message"]["content"]
+        
+        chat_history.append({"role": "assistant", "content": ai_reply})
+        save_history(chat_history)
+        
+        return {"response": ai_reply}
+
+    except requests.exceptions.RequestException as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+app.mount("/", StaticFiles(directory=CURRENT_DIR, html=True), name="static")

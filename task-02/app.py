@@ -3,10 +3,12 @@ import os
 import requests
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
+from dotenv import load_dotenv
 
 app = FastAPI()
 
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "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")
+load_dotenv()
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 HISTORY_FILE = "chat_history.json"
 WINDOW_SIZE = 10 # the last 5 prompts of user + 5 answer of ai = 10

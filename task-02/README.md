@@ -2,7 +2,7 @@
 
 - Duration:
     - Start: 22 Sep 2026
-    - End: In Progress
+    - End: 28 Sep 2026
 
 - Files:
     - app.py
@@ -27,3 +27,9 @@ To prevent token overflow and minimize API costs in production, the conversation
 
 * **Sliding Window:** Retains only a fixed buffer of recent messages (e.g., the last 10 messages) while discarding older ones. While computationally cheap and simple to implement, its downside is that the model completely loses context from earlier turns.
 * **Conversation Summarization:** Defines a threshold for message count. Once crossed, older turns are passed through the model to generate a concise summary. This summary is retained as a high-level system context alongside the latest turns, enabling long-term context retention while reducing input token usage.
+
+For this implementation, I opted for the Sliding Window approach. The following configuration was added to the backend to retain only the last 10 messages (exactly 5 user prompts and 5 AI responses). This successfully manages the context window and marks the completion of Task 02:
+
+```Python
+WINDOW_SIZE = 10 # the last 5 prompts of user + 5 answer of ai = 10
+```

@@ -2,3 +2,4 @@ __pycache__
 .venv
 .vscode
 chat_history.json
+chat_database.db

@@ -6,6 +6,7 @@
 
 - Files:
     - app.py
+    - chat_history.json
 
 ### Implement Conversational Memory
 

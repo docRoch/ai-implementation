@@ -3,3 +3,5 @@ __pycache__/
 *.pyc
 *.db
 chat_history.json
+.venv
+.vscode

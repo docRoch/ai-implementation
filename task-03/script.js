@@ -3,12 +3,14 @@ let controller, typingInterval;
 let isNewSession = true;
 let pendingPrompt = "";
 let pendingChatName = "";
-
-// متغیرهای مدال‌های جدید
 let currentRenameId = null;
 let currentDeleteId = null;
 
-const parseMarkdown = (text) => typeof marked !== 'undefined' ? marked.parse(text) : text;
+const parseMarkdown = (text) => {
+  if (typeof marked === 'undefined') return text;
+  const rawHtml = marked.parse(text);
+  return typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize(rawHtml) : rawHtml;
+};
 
 function showToast(message, type = 'error') {
   const container = document.getElementById('toastContainer');
@@ -16,10 +18,8 @@ function showToast(message, type = 'error') {
 
   const toast = document.createElement('div');
   toast.className = `toast-msg ${type === 'error' ? 'error' : ''}`;
-  
   const icon = type === 'error' ? '<i class="fas fa-exclamation-circle text-red-500"></i>' : '<i class="fas fa-check-circle text-primary"></i>';
   toast.innerHTML = `${icon} <span>${message}</span>`;
-  
   container.appendChild(toast);
 
   setTimeout(() => {
@@ -28,25 +28,28 @@ function showToast(message, type = 'error') {
   }, 3500);
 }
 
-function getGuestId() {
-  let gid = localStorage.getItem("guest_id");
-  if (!gid) {
-    gid = Math.random().toString(36).substring(2, 10);
-    localStorage.setItem("guest_id", gid);
+async function createNewSession() {
+  try {
+    const token = localStorage.getItem("access_token");
+    const headers = {};
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+
+    const res = await fetch("/session/new", { method: "POST", headers });
+    const data = await res.json();
+    localStorage.setItem("chat_session_id", data.session_id);
+    isNewSession = true;
+    return data.session_id;
+  } catch (err) {
+    const fallbackId = "sess_" + Math.random().toString(36).substring(2, 10);
+    localStorage.setItem("chat_session_id", fallbackId);
+    isNewSession = true;
+    return fallbackId;
   }
-  return gid;
 }
 
-function createNewSession() {
-  const newId = "sess_" + getGuestId() + "_" + Math.random().toString(36).substring(2, 10);
-  localStorage.setItem("chat_session_id", newId);
-  isNewSession = true;
-  return newId;
-}
-
-function getSessionId() {
+async function getSessionId() {
   let sId = localStorage.getItem("chat_session_id");
-  if (!sId) sId = createNewSession();
+  if (!sId) sId = await createNewSession();
   return sId;
 }
 
@@ -55,7 +58,6 @@ let savedChats = JSON.parse(localStorage.getItem("saved_chats") || "[]");
 function renderSidebar() {
   const historyList = document.getElementById('historyList');
   historyList.innerHTML = "";
-  
   savedChats.sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
 
   savedChats.forEach(chat => {
@@ -87,24 +89,25 @@ function renderSidebar() {
   });
 }
 
-function addChatToSidebar(title, autoSelect = false) {
-  savedChats.push({ id: getSessionId(), name: title, pinned: false });
+async function addChatToSidebar(title, autoSelect = false) {
+  const currentId = await getSessionId();
+  savedChats.push({ id: currentId, name: title, pinned: false });
   localStorage.setItem("saved_chats", JSON.stringify(savedChats));
   renderSidebar();
-  
+
   if (autoSelect) {
-      selectChat(getSessionId());
+    selectChat(currentId);
   } else {
-      document.querySelectorAll('.history-item').forEach(i => i.classList.remove('active'));
-      const item = document.querySelector(`.history-item[data-id="${getSessionId()}"]`);
-      if(item) item.classList.add('active');
+    document.querySelectorAll('.history-item').forEach(i => i.classList.remove('active'));
+    const item = document.querySelector(`.history-item[data-id="${currentId}"]`);
+    if (item) item.classList.add('active');
   }
 }
 
 function toggleChatMenu(e, id) {
   e.stopPropagation();
   document.querySelectorAll('.chat-dropdown').forEach(m => {
-    if(m.id !== `menu-${id}`) m.classList.remove('show');
+    if (m.id !== `menu-${id}`) m.classList.remove('show');
   });
   document.getElementById(`menu-${id}`).classList.toggle('show');
 }
@@ -112,12 +115,11 @@ function toggleChatMenu(e, id) {
 function pinChat(e, id) {
   e.stopPropagation();
   const chat = savedChats.find(c => c.id === id);
-  if(chat) chat.pinned = !chat.pinned;
+  if (chat) chat.pinned = !chat.pinned;
   localStorage.setItem("saved_chats", JSON.stringify(savedChats));
   renderSidebar();
 }
 
-// توابع مربوط به مدال تغییر نام چت
 const renameModal = document.getElementById('renameModal');
 const renameInput = document.getElementById('renameInput');
 const renameForm = document.getElementById('renameForm');
@@ -126,7 +128,7 @@ function openRenameModal(e, id) {
   e.stopPropagation();
   currentRenameId = id;
   const chat = savedChats.find(c => c.id === id);
-  if(chat) {
+  if (chat) {
     renameInput.value = chat.name;
     renameModal.classList.remove('hidden');
     renameInput.focus();
@@ -141,9 +143,9 @@ document.getElementById('cancelRenameBtn').addEventListener('click', () => {
 renameForm.addEventListener('submit', (e) => {
   e.preventDefault();
   const newName = renameInput.value.trim();
-  if(newName && currentRenameId) {
+  if (newName && currentRenameId) {
     const chat = savedChats.find(c => c.id === currentRenameId);
-    if(chat) {
+    if (chat) {
       chat.name = newName;
       localStorage.setItem("saved_chats", JSON.stringify(savedChats));
       renderSidebar();
@@ -153,7 +155,6 @@ renameForm.addEventListener('submit', (e) => {
   currentRenameId = null;
 });
 
-// توابع مربوط به مدال حذف چت
 const deleteModal = document.getElementById('deleteModal');
 
 function openDeleteModal(e, id) {
@@ -168,42 +169,44 @@ document.getElementById('cancelDeleteBtn').addEventListener('click', () => {
 });
 
 document.getElementById('confirmDeleteBtn').addEventListener('click', async () => {
-  if(!currentDeleteId) return;
+  if (!currentDeleteId) return;
   const id = currentDeleteId;
   deleteModal.classList.add('hidden');
   currentDeleteId = null;
 
-  const userId = localStorage.getItem("user_id") || "";
-  const headers = {};
-  if (userId) headers["x-user-id"] = userId;
-  
+  const token = localStorage.getItem("access_token");
+  const headers = { "Content-Type": "application/json" };
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+
   try {
     await fetch(`/chat/${id}`, { method: 'DELETE', headers });
-  } catch(err) { console.error(err); }
-  
+  } catch (err) { console.error(err); }
+
   savedChats = savedChats.filter(c => c.id !== id);
   localStorage.setItem("saved_chats", JSON.stringify(savedChats));
   renderSidebar();
-  
-  if(localStorage.getItem("chat_session_id") === id) {
-     document.getElementById('newChatBtn').click();
+
+  if (localStorage.getItem("chat_session_id") === id) {
+    document.getElementById('newChatBtn').click();
   }
 });
 
 document.addEventListener('click', (e) => {
-  if(!e.target.closest('.chat-actions')) {
+  if (!e.target.closest('.chat-actions')) {
     document.querySelectorAll('.chat-dropdown').forEach(m => m.classList.remove('show'));
   }
 });
 
 async function syncUserChats() {
-  const userId = localStorage.getItem("user_id");
-  if (!userId) return;
+  const token = localStorage.getItem("access_token");
+  if (!token) return;
   try {
-    const res = await fetch("/user/chats", { headers: { "x-user-id": userId } });
+    const res = await fetch("/user/chats", {
+      headers: { "Authorization": `Bearer ${token}` }
+    });
     if (!res.ok) return;
     const data = await res.json();
-    
+
     let localChats = JSON.parse(localStorage.getItem("saved_chats") || "[]");
     data.chats.forEach(serverChat => {
       if (!localChats.find(c => c.id === serverChat.id)) {
@@ -256,16 +259,14 @@ closeModalBtn.addEventListener('click', closeModal);
 tabLoginBtn.addEventListener('click', showLogin);
 tabSignupBtn.addEventListener('click', showSignup);
 
-function handleAuthSuccess(name, userId) {
+function handleAuthSuccess(name, userId, token) {
   localStorage.setItem("user_id", userId);
   localStorage.setItem("user_name", name);
+  localStorage.setItem("access_token", token);
   profileName.textContent = name;
   closeModal();
-  
   showToast("Successfully authenticated!", "success");
-
   syncUserChats();
-
   if (pendingPrompt) {
     const textToSend = pendingPrompt;
     pendingPrompt = "";
@@ -280,20 +281,19 @@ loginForm.addEventListener("submit", async (e) => {
   try {
     const res = await fetch("/login", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password, guest_id: getGuestId() })
+      body: JSON.stringify({ email, password })
     });
-    
+
     const contentType = res.headers.get("content-type");
     let data;
     if (contentType && contentType.includes("application/json")) {
-        data = await res.json();
+      data = await res.json();
     } else {
-        const errText = await res.text();
-        throw new Error(errText || "Internal Server Error");
+      const errText = await res.text();
+      throw new Error(errText || "Internal Server Error");
     }
-
     if (!res.ok) throw new Error(data.detail || "Login failed");
-    handleAuthSuccess(data.name, data.user_id);
+    handleAuthSuccess(data.name, data.user_id, data.access_token);
   } catch (err) { showToast(err.message, "error"); }
 });
 
@@ -305,26 +305,24 @@ signupForm.addEventListener("submit", async (e) => {
   try {
     const res = await fetch("/register", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, password, guest_id: getGuestId() })
+      body: JSON.stringify({ name, email, password })
     });
-    
+
     const contentType = res.headers.get("content-type");
     let data;
     if (contentType && contentType.includes("application/json")) {
-        data = await res.json();
+      data = await res.json();
     } else {
-        const errText = await res.text();
-        throw new Error(errText || "Internal Server Error");
+      const errText = await res.text();
+      throw new Error(errText || "Internal Server Error");
     }
-
     if (!res.ok) throw new Error(data.detail || "Registration failed");
-    handleAuthSuccess(data.name, data.user_id);
+    handleAuthSuccess(data.name, data.user_id, data.access_token);
   } catch (err) { showToast(err.message, "error"); }
 });
 
 const welcomeScreen = document.getElementById('welcomeScreen');
 const chatScreen = document.getElementById('chatScreen');
-const messageArea = document.getElementById('messageArea').querySelector('.message-container');
 const chatInput = document.getElementById('chatInput');
 const sendBtn = document.getElementById('sendBtn');
 const stopBtn = document.getElementById('stopBtn');
@@ -332,7 +330,6 @@ const chatInputActive = document.getElementById('chatInputActive');
 const sendBtnActive = document.getElementById('sendBtnActive');
 const stopBtnActive = document.getElementById('stopBtnActive');
 const newChatBtn = document.getElementById('newChatBtn');
-
 const chatNameModal = document.getElementById('chatNameModal');
 const chatNameForm = document.getElementById('chatNameForm');
 const chatNameInput = document.getElementById('chatNameInput');
@@ -394,12 +391,13 @@ const typingEffect = (text, textElement) => {
   textElement.innerHTML = "";
   const words = text.split(" ");
   let wordIndex = 0;
+  const messageArea = document.getElementById('messageArea');
   typingInterval = setInterval(() => {
     if (wordIndex < words.length) {
       wordIndex++;
       const currentText = words.slice(0, wordIndex).join(" ");
       textElement.innerHTML = parseMarkdown(currentText);
-      messageArea.parentElement.scrollTop = messageArea.parentElement.scrollHeight;
+      if (messageArea) messageArea.scrollTop = messageArea.scrollHeight;
     } else {
       clearInterval(typingInterval);
       stopBtnActive.classList.add("hidden");
@@ -419,7 +417,7 @@ function handleSend() {
     chatNameInput.focus();
     return;
   }
-  
+
   executeSend(text);
 }
 
@@ -430,7 +428,7 @@ chatNameForm.addEventListener('submit', (e) => {
     pendingChatName = chatName;
   }
   chatNameModal.classList.add('hidden');
-  
+
   if (pendingPrompt) {
     const textToSend = pendingPrompt;
     pendingPrompt = "";
@@ -446,7 +444,6 @@ async function executeSend(text, isRetry = false) {
 
   if (!isRetry) {
     appendMessage('user', text);
-    
     chatInput.value = '';
     chatInput.style.height = 'auto';
     chatInputActive.value = '';
@@ -459,40 +456,45 @@ async function executeSend(text, isRetry = false) {
 
   const aiMsgDiv = appendMessage('ai', 'Thinking...');
   stopBtnActive.classList.remove("hidden");
-  
   controller = new AbortController();
-  const userId = localStorage.getItem("user_id") || "";
+
+  const token = localStorage.getItem("access_token");
   const headers = { "Content-Type": "application/json" };
-  if (userId) headers["x-user-id"] = userId;
+  if (token) headers["Authorization"] = `Bearer ${token}`;
 
   try {
+    const sessionId = await getSessionId();
     const response = await fetch(BACKEND_URL, {
-      method: "POST", headers: headers,
-      body: JSON.stringify({ prompt: text, session_id: getSessionId() }),
+      method: "POST",
+      headers: headers,
+      body: JSON.stringify({ prompt: text, session_id: sessionId }),
       signal: controller.signal
     });
-    
+
     const contentType = response.headers.get("content-type");
     let data;
     if (contentType && contentType.includes("application/json")) {
-        data = await response.json();
+      data = await response.json();
     } else {
-        const errText = await response.text();
-        throw new Error(errText || "Internal Server Error");
+      const errText = await response.text();
+      throw new Error(errText || "Internal Server Error");
     }
-    
+
     if (response.status === 403 && data.detail === "LOGIN_REQUIRED") {
       aiMsgDiv.remove();
-      messageArea.lastElementChild.remove();
+      const container = document.getElementById('messageArea').querySelector('.message-container');
+      if (container && container.lastElementChild) {
+        container.lastElementChild.remove();
+      }
       pendingPrompt = text;
       openModal();
       return;
     }
-    
+
     if (!response.ok) throw new Error(data.detail || "Server error occurred");
-    
+
     if (pendingChatName) {
-      addChatToSidebar(pendingChatName, false);
+      await addChatToSidebar(pendingChatName, false);
       isNewSession = false;
       pendingChatName = "";
     }
@@ -510,17 +512,22 @@ async function executeSend(text, isRetry = false) {
 }
 
 function appendMessage(sender, text) {
+  const container = document.getElementById('messageArea').querySelector('.message-container');
+  if (!container) return null;
+
+  const roleClass = (sender === 'assistant' || sender === 'ai') ? 'ai' : 'user';
   const div = document.createElement('div');
-  div.className = `message ${sender}`;
+  div.className = `message ${roleClass}`;
   
-  if (sender === 'ai') {
-      div.innerHTML = parseMarkdown(text);
+  if (roleClass === 'ai') {
+    div.innerHTML = parseMarkdown(text);
   } else {
-      div.innerText = text; 
+    div.innerText = text;
   }
   
-  messageArea.appendChild(div);
-  messageArea.parentElement.scrollTop = messageArea.parentElement.scrollHeight;
+  container.appendChild(div);
+  const messageArea = document.getElementById('messageArea');
+  if (messageArea) messageArea.scrollTop = messageArea.scrollHeight;
   return div;
 }
 
@@ -540,11 +547,14 @@ stopBtnActive.addEventListener('click', () => {
   chatInputActive.disabled = false;
 });
 
-newChatBtn.addEventListener('click', () => {
-  createNewSession();
+newChatBtn.addEventListener('click', async () => {
+  await createNewSession();
   welcomeScreen.classList.remove('hidden');
   chatScreen.classList.add('hidden');
-  messageArea.innerHTML = '';
+  
+  const container = document.getElementById('messageArea').querySelector('.message-container');
+  if (container) container.innerHTML = '';
+  
   chatInput.value = '';
   chatInput.style.height = 'auto';
   sendBtn.disabled = true;
@@ -555,31 +565,32 @@ newChatBtn.addEventListener('click', () => {
 async function selectChat(sid) {
   document.querySelectorAll('.history-item').forEach(i => i.classList.remove('active'));
   const item = document.querySelector(`.history-item[data-id="${sid}"]`);
-  if(item) item.classList.add('active');
-  
+  if (item) item.classList.add('active');
+
   localStorage.setItem("chat_session_id", sid);
   isNewSession = false;
-  
-  const userId = localStorage.getItem("user_id") || "";
+
+  const token = localStorage.getItem("access_token");
   const headers = {};
-  if (userId) headers["x-user-id"] = userId;
-  
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+
   try {
     const res = await fetch(`/history/${sid}`, { headers });
-    
     const contentType = res.headers.get("content-type");
     let data;
     if (contentType && contentType.includes("application/json")) {
-        data = await res.json();
+      data = await res.json();
     } else {
-        const errText = await res.text();
-        throw new Error(errText || "Internal Server Error");
+      const errText = await res.text();
+      throw new Error(errText || "Internal Server Error");
     }
+
+    const container = document.getElementById('messageArea').querySelector('.message-container');
+    if (container) container.innerHTML = '';
     
-    messageArea.innerHTML = '';
     welcomeScreen.classList.add('hidden');
     chatScreen.classList.remove('hidden');
-    
+
     if (data.history) {
       data.history.forEach(msg => appendMessage(msg.role, msg.content));
     }
@@ -587,8 +598,6 @@ async function selectChat(sid) {
 }
 
 window.addEventListener('load', () => chatInput.focus());
-
-// بستن مودال‌های عمومی در صورت کلیک خارج از کادر
 window.addEventListener('click', (e) => {
   if (e.target === authModal) closeModal();
   if (e.target === chatNameModal) cancelChatName();

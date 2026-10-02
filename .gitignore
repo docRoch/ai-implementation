@@ -1,6 +1,5 @@
-__pycache__
-.venv
-.vscode
-chat_history.json
-chat_database.db
 .env
+__pycache__/
+*.pyc
+*.db
+chat_history.json

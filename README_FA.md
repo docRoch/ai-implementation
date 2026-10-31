@@ -2,11 +2,11 @@
 
 # مجموعه پروژه‌های پیاده‌سازی هوش مصنوعی (AI Implementation)
 
-[![License: MIT](https://img.shields.io/badge/لایسنس-MIT-blue.svg)](LICENSE)
-[![Python: 3.10+](https://img.shields.io/badge/پایتون-3.10%2B-3776AB.svg?logo=python&logoColor=white)](https://python.org)
-[![FastAPI](https://img.shields.io/badge/فریم‌ورک-FastAPI-009688.svg?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
-[![Database: SQLite](https://img.shields.io/badge/دیتابیس-SQLite-003B57.svg?logo=sqlite&logoColor=white)](https://sqlite.org)
-[![Tailwind CSS](https://img.shields.io/badge/رابط_کاربری-Tailwind_CSS-38B2AC.svg?logo=tailwind-css&logoColor=white)](https://tailwindcss.com)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Python: 3.10+](https://img.shields.io/badge/Python-3.10%2B-3776AB.svg?logo=python&logoColor=white)](https://python.org)
+[![FastAPI](https://img.shields.io/badge/Framework-FastAPI-009688.svg?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
+[![Database: SQLite](https://img.shields.io/badge/Database-SQLite-003B57.svg?logo=sqlite&logoColor=white)](https://sqlite.org)
+[![Tailwind CSS](https://img.shields.io/badge/UI-Tailwind_CSS-38B2AC.svg?logo=tailwind-css&logoColor=white)](https://tailwindcss.com)
 
 [English](README.md) | فارسی
 
@@ -132,11 +132,12 @@ ai-implementation/
 ## مشارکت
 
 پیشنهادات، گزارش باگ‌ها و مشارکت‌های فنی با آغوش باز پذیرفته می‌شوند!
-۱. مخزن را فورک کنید.
-۲. یک برنچ جدید برای قابلیت خود ایجاد کنید (`git checkout -b feature/cool-enhancement`).
-۳. تغییرات را کامیت کنید (`git commit -m 'Add cool enhancement'`).
-۴. تغییرات را به برنچ خود پوش کنید (`git push origin feature/cool-enhancement`).
-۵. یک پول ریکوئست (Pull Request) باز کنید.
+
+1. مخزن را فورک کنید.<br>
+2. یک شاخه جدید بسازید (`git checkout -b feature/ai-enhancement`).<br>
+3. تغییرات خود را کامیت کنید (`git commit -m "Add new feature"`).<br>
+4. تغییرات را به شاخه خود پوش نمایید (`git push origin feature/ai-enhancement`).<br>
+5. یک Pull Request باز کنید.
 
 ---
 

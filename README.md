@@ -12,7 +12,7 @@ A progressive, hands-on engineering repository demonstrating real-world Large La
 
 ---
 
-## 🌟 Overview
+## Overview
 
 Building production AI software requires far more than basic API prompts. This repository progresses step-by-step from raw API integration and robust error handling to application-managed conversational memory, culminating in a full-stack chatbot with authenticated user sessions, guest quotas, and dynamic UI management.
 
@@ -24,7 +24,7 @@ Key highlights:
 
 ---
 
-## 🧩 Tasks Breakdown
+## Tasks Breakdown
 
 | Task | Name | Focus | Tech Stack |
 | :--- | :--- | :--- | :--- |
@@ -51,7 +51,7 @@ Key highlights:
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -106,7 +106,7 @@ Key highlights:
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```text
 ai-implementation/
@@ -129,7 +129,7 @@ ai-implementation/
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 Contributions, bug reports, and suggestions are welcome!
 1. Fork the repository.
@@ -140,6 +140,7 @@ Contributions, bug reports, and suggestions are welcome!
 
 ---
 
-## 📜 License
+## License
 
 This project is licensed under the [MIT License](LICENSE).
+

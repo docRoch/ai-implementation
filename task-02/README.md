@@ -1,12 +1,9 @@
-## Task 02
+# Task 02 — Conversational Memory
 
-- Duration:
-    - Start: 22 Sep 2026
-    - End: 28 Sep 2026
+English | [فارسی](README_FA.md)
 
-- Files:
-    - app.py
-    - chat_history.json
+- **Duration**: 22 Sep 2026 – 28 Sep 2026
+- **Files**: `app.py`, `chat_history.json`
 
 ### Implement Conversational Memory
 

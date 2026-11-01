@@ -1,16 +1,9 @@
-## Task 03
+# Task 03 — Full-Stack Web Chatbot
 
-- Duration:
-    - Start: 28 Sep 2026
-    - End: In Progress
+English | [فارسی](README_FA.md)
 
-- Files:
-    - app.py
-    - index.html
-    - script.js
-    - style.css
-    - chat_database.db
-    - chatbot-icon.svg
+- **Duration**: 28 Sep 2026 – 02 Oct 2026 (Completed)
+- **Files**: `app.py`, `index.html`, `script.js`, `style.css`, `chat_database.db`, `chatbot-icon.svg`
 
 ### Full-Stack Web Chatbot with Session & User Management
 

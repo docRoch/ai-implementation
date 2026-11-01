@@ -1,12 +1,9 @@
-## Task 01
+# Task 01 — Custom AI Gateway API
 
-- Duration:
-    - Start: 16 Sep 2026
-    - End: 19 Sep 2026
+English | [فارسی](README_FA.md)
 
-- Files:
-    - main.py
-    - apiapp.py
+- **Duration**: 16 Sep 2026 – 19 Sep 2026
+- **Files**: `main.py`, `apiapp.py`
 
 
 ### Build a custom AI API accepting only POST requests
